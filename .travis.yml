@@ -12,6 +12,8 @@ services:
 
 before_install:
     - docker --version
+      # prepare qemu
+    - docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
 install:
     - git clone https://github.com/docker-library/official-images.git official-images
@@ -19,8 +21,8 @@ install:
 # Assist with ci test debugging:
 #   - DEBUG=1
 before_script:
-    - image="kylemanna/openvpn"
-    - docker build -t "$image" .
+    - image="raigen/rpi-ovpn"
+    - docker build -t "$image" -f Dockerfile.armhf .
     - docker inspect "$image"
     - docker run --rm "$image" openvpn --version || true # why does it return 1?
     - docker run --rm "$image" openssl version
@@ -31,3 +33,7 @@ script:
 
 after_script:
     - docker images
+
+after_success:
+    - docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
+    - docker push $image
